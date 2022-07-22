@@ -47,5 +47,5 @@ jobs:
         password: ${{ secrets.VPS_SSH_PASSWORD }}
         script_stop: true
         script: |
-          docker pull $DOCKERHUB_USERNAME/bmi:latest
-          docker run -d --rm -p 8000:8000 --name bmiapp $DOCKERHUB_USERNAME/bmi:latest
+          docker pull duykypaul/bmi:latest
+          docker run -d --rm -p 8000:8000 --name bmiapp duykypaul/bmi:latest
