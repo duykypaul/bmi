@@ -35,7 +35,7 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: Deploy package to digitalocean
+    - name: Deploy app to server
       uses: appleboy/ssh-action@master
       env:
         DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -45,6 +45,7 @@ jobs:
         port: ${{ secrets.VPS_SSH_PORT }}
         username: ${{ secrets.VPS_SSH_USERNAME }}
         password: ${{ secrets.VPS_SSH_PASSWORD }}
+        script_stop: true
         script: |
           docker pull $DOCKERHUB_USERNAME/bmi:latest
           docker run -d --rm -p 8000:8000 --name bmiapp $DOCKERHUB_USERNAME/bmi:latest
