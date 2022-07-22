@@ -32,5 +32,19 @@ jobs:
         tags: latest
         registry: docker.io
         dockerfile: Dockerfile
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Deploy package to digitalocean
+      uses: appleboy/ssh-action@master
+      env:
+        DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      with:
+        host: ${{ secrets.VPS_SSH_HOST }}
+        port: ${{ secrets.VPS_SSH_PORT }}
+        username: ${{ secrets.VPS_SSH_USERNAME }}
+        password: ${{ secrets.VPS_SSH_PASSWORD }}
+        script: |
+          docker pull $DOCKERHUB_USERNAME/bmi:latest
+          docker run -d --rm -p 8000:8000 --name bmiapp $DOCKERHUB_USERNAME/bmi:latest
