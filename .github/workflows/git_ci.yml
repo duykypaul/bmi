@@ -1,7 +1,4 @@
-# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
-# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
-
-name: Build & Deploy
+name: Build Docker & Deploy
 
 on:
   push:
@@ -9,9 +6,14 @@ on:
   pull_request:
     branches: [ "master" ]
 
+env:
+  REPO: ${{ secrets.DOCKER_REPO }}
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+  PROJECT_NAME: bmiapp
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
     continue-on-error: false
     steps:
@@ -25,28 +27,37 @@ jobs:
     - name: Build with Maven
       run: mvn clean install
 
+  dockerize:
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    needs:
+      - build
+    steps:
     - name: Build & push Docker image
       uses: mr-smithers-excellent/docker-build-push@v5
       with:
-        image: duykypaul/bmi
+        image: $REPO
         tags: latest
         registry: docker.io
         dockerfile: Dockerfile
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: Deploy app to server
-      uses: appleboy/ssh-action@master
-      env:
-        DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-        DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-      with:
-        host: ${{ secrets.VPS_SSH_HOST }}
-        port: ${{ secrets.VPS_SSH_PORT }}
-        username: ${{ secrets.VPS_SSH_USERNAME }}
-        password: ${{ secrets.VPS_SSH_PASSWORD }}
-        script_stop: true
-        script: |
-          docker pull duykypaul/bmi:latest
-          docker container stop bmiapp || true
-          docker run -d --rm -p 8000:8000 --name bmiapp duykypaul/bmi:latest
+  deploy:
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    needs:
+      - dockerize
+    steps:
+      - name: Deploy app to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_SSH_HOST }}
+          port: ${{ secrets.VPS_SSH_PORT }}
+          username: ${{ secrets.VPS_SSH_USERNAME }}
+          password: ${{ secrets.VPS_SSH_PASSWORD }}
+          script_stop: true
+          script: |
+            docker pull $REPO:latest
+            docker container stop $PROJECT_NAME || true
+            docker run -d --rm -p 8000:8000 --name $PROJECT_NAME $REPO:latest
