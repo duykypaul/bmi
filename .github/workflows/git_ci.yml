@@ -37,8 +37,8 @@ jobs:
         tags: latest
         registry: docker.io
         dockerfile: Dockerfile
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+        username: $DOCKERHUB_USERNAME
+        password: $DOCKERHUB_TOKEN
 
     - name: Deploy app to server
       uses: appleboy/ssh-action@master
@@ -49,6 +49,6 @@ jobs:
         password: ${{ secrets.VPS_SSH_PASSWORD }}
         script_stop: true
         script: |
-          docker pull $REPO:latest
-          docker container stop $PROJECT_NAME || true
-          docker run -d --rm -p 8000:8000 --name $PROJECT_NAME $REPO:latest
+          docker pull duykypaul/bmi:latest
+          docker container stop bmiapp || true
+          docker run -d --rm -p 8000:8000 --name bmiapp duykypaul/bmi:latest
