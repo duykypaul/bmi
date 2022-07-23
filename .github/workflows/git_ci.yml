@@ -1,4 +1,7 @@
-name: Build Docker & Deploy
+# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: Build & Deploy
 
 on:
   push:
@@ -27,12 +30,6 @@ jobs:
     - name: Build with Maven
       run: mvn clean install
 
-  dockerize:
-    runs-on: ubuntu-latest
-    continue-on-error: false
-    needs:
-      - build
-    steps:
     - name: Build & push Docker image
       uses: mr-smithers-excellent/docker-build-push@v5
       with:
@@ -43,21 +40,15 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-  deploy:
-    runs-on: ubuntu-latest
-    continue-on-error: false
-    needs:
-      - dockerize
-    steps:
-      - name: Deploy app to server
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.VPS_SSH_HOST }}
-          port: ${{ secrets.VPS_SSH_PORT }}
-          username: ${{ secrets.VPS_SSH_USERNAME }}
-          password: ${{ secrets.VPS_SSH_PASSWORD }}
-          script_stop: true
-          script: |
-            docker pull $REPO:latest
-            docker container stop $PROJECT_NAME || true
-            docker run -d --rm -p 8000:8000 --name $PROJECT_NAME $REPO:latest
+    - name: Deploy app to server
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.VPS_SSH_HOST }}
+        port: ${{ secrets.VPS_SSH_PORT }}
+        username: ${{ secrets.VPS_SSH_USERNAME }}
+        password: ${{ secrets.VPS_SSH_PASSWORD }}
+        script_stop: true
+        script: |
+          docker pull $REPO:latest
+          docker container stop $PROJECT_NAME || true
+          docker run -d --rm -p 8000:8000 --name $PROJECT_NAME $REPO:latest
