@@ -37,8 +37,8 @@ jobs:
         tags: latest
         registry: docker.io
         dockerfile: Dockerfile
-        username: $DOCKERHUB_USERNAME
-        password: $DOCKERHUB_TOKEN
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     - name: Deploy app to server
       uses: appleboy/ssh-action@master
